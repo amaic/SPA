@@ -1,6 +1,7 @@
 import { Configuration } from "webpack";
 import path from "path";
-import HtmlWebpackPlugin from "html-webpack-plugin"; 
+import HtmlWebpackPlugin from "html-webpack-plugin";
+import CopyHtmlPlugin from "copy-webpack-plugin";
 
 
 const config: Configuration =
@@ -34,9 +35,14 @@ const config: Configuration =
         extensions: ['.tsx', '.ts', '.js'],
     },
 
-    plugins:[
+    plugins: [
         new HtmlWebpackPlugin({
             template: './src/index.html'
+        }),
+        new CopyHtmlPlugin({
+            patterns: [
+                { from: "./src/appSettings.json", to: 'appSettings.json' }
+            ]
         })
     ]
 };

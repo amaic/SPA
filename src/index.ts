@@ -1,5 +1,3 @@
-console.debug("test");
+import Bootloader from "./bootloader";
 
-const a = "123";
-
-console.debug(a);
+Bootloader("./appSettings.json");
