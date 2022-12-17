@@ -1,3 +1,8 @@
+import { ServiceCollection } from "@amaic/dijs";
+import { ServiceRegistrationMode } from "@amaic/dijs-abstractions";
+import "@amaic/dijs-extensions-registration";
+import IAppSettings, { IAppSettingsIdentifier } from "./interfaces/IAppSettings";
+
 let fetchAppSettingsTask: Promise<Response> | undefined;
 
 export default function Bootloader(appSettingsUrl: string)
@@ -30,5 +35,19 @@ async function Startup()
         return;
     }
 
-    console.debug(await appSettingsrResponse.json());
+    const appSettings: IAppSettings = await appSettingsrResponse.json();
+
+    const serviceCollection = new ServiceCollection();
+
+    serviceCollection.RegisterInstance(
+        ServiceRegistrationMode.Single,
+        IAppSettingsIdentifier,
+        appSettings
+        );
+
+    const serviceProvider = serviceCollection.CreateServiceProvider();
+
+    const test = serviceProvider.GetRequiredService<IAppSettings>(IAppSettingsIdentifier);
+
+    console.debug(test.ApiEndpoint);
 }
