@@ -1,1 +1,1 @@
-{"version":3,"file":"bundle.js","mappings":";;;;;;;AAAA,OAAO,CAAC,KAAK,CAAC,MAAM,CAAC,CAAC","sources":["webpack://spa/./src/index.ts"],"sourcesContent":["console.debug(\"test\");"],"names":[],"sourceRoot":""}
+{"version":3,"file":"bundle.js","mappings":";;;;;;;AAAA,OAAO,CAAC,KAAK,CAAC,MAAM,CAAC,CAAC;AAEtB,MAAM,CAAC,GAAG,KAAK,CAAC;AAEhB,OAAO,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC","sources":["webpack://spa/./src/index.ts"],"sourcesContent":["console.debug(\"test\");\r\n\r\nconst a = \"123\";\r\n\r\nconsole.debug(a);"],"names":[],"sourceRoot":""}

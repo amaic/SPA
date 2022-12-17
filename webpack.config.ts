@@ -1,5 +1,6 @@
 import { Configuration } from "webpack";
 import path from "path";
+import HtmlWebpackPlugin from "html-webpack-plugin"; 
 
 
 const config: Configuration =
@@ -32,6 +33,12 @@ const config: Configuration =
     resolve: {
         extensions: ['.tsx', '.ts', '.js'],
     },
+
+    plugins:[
+        new HtmlWebpackPlugin({
+            template: './src/index.html'
+        })
+    ]
 };
 
 export default config;

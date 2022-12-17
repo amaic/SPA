@@ -6,6 +6,8 @@ var __webpack_exports__ = {};
   \**********************/
 
 console.debug("test");
+const a = "123";
+console.debug(a);
 
 /******/ })()
 ;
