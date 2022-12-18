@@ -1,11 +1,12 @@
 import { ServiceCollection } from "@amaic/dijs";
-import { ServiceRegistrationMode } from "@amaic/dijs-abstractions";
-import "@amaic/dijs-extensions-registration";
+import { IServiceCollection, ServiceRegistrationMode } from "@amaic/dijs-abstractions";
 import IAppSettings, { IAppSettingsIdentifier } from "./interfaces/IAppSettings";
+import "@amaic/dijs-extensions-registration";
+import { IStateManager, IStateManagerIdentifier, IStateManagerStorage, IStateManagerStorageIdentifier, StateManager, StateManagerLocalStorage }from "amaic-sma";
 
 let fetchAppSettingsTask: Promise<Response> | undefined;
 
-export default function Bootloader(appSettingsUrl: string)
+export default function Bootloader(appSettingsUrl: string): void
 {
     fetchAppSettingsTask = fetch(appSettingsUrl);
 
@@ -19,7 +20,7 @@ export default function Bootloader(appSettingsUrl: string)
     }
 }
 
-async function Startup()
+async function Startup(): Promise<void>
 {
     if (fetchAppSettingsTask == undefined)
     {
@@ -43,11 +44,22 @@ async function Startup()
         ServiceRegistrationMode.Single,
         IAppSettingsIdentifier,
         appSettings
-        );
+    );
 
-    const serviceProvider = serviceCollection.CreateServiceProvider();
+    registerServices(serviceCollection, appSettings);
 
-    const test = serviceProvider.GetRequiredService<IAppSettings>(IAppSettingsIdentifier);
+}
 
-    console.debug(test.ApiEndpoint);
+async function registerServices(serviceCollection: IServiceCollection, appSettings: IAppSettings): Promise<void>
+{
+    serviceCollection.RegisterTransientClass<IStateManager, typeof StateManager>(
+        IStateManagerIdentifier,
+        StateManager,
+        (classType, serviceProvider)=> new classType(serviceProvider.GetRequiredServices<IStateManagerStorage>(IStateManagerStorageIdentifier))
+    );
+
+    serviceCollection.RegisterTransientClass<IStateManagerStorage, typeof StateManagerLocalStorage>(
+        IStateManagerStorageIdentifier,
+        StateManagerLocalStorage
+    );
 }

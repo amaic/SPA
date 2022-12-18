@@ -29,6 +29,6 @@
   "dependencies": {
     "@amaic/dijs": "^0.8.1",
     "@amaic/dijs-abstractions": "^0.8.0",
-    "@amaic/dijs-extensions-registration": "^0.2.0"
+    "@amaic/dijs-extensions-registration": "^0.2.3"
   }
 }

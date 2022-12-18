@@ -137,8 +137,23 @@ exports.ServiceCollection = void 0;
 const dijs_1 = __webpack_require__(/*! @amaic/dijs */ "./node_modules/@amaic/dijs/dist/index.js");
 Object.defineProperty(exports, "ServiceCollection", ({ enumerable: true, get: function () { return dijs_1.ServiceCollection; } }));
 const dijs_abstractions_1 = __webpack_require__(/*! @amaic/dijs-abstractions */ "./node_modules/@amaic/dijs-abstractions/dist/index.js");
-dijs_1.ServiceCollection.prototype.RegisterTransientClass = function (id, ct, ctr) {
-    this.RegisterClass(dijs_abstractions_1.ServiceRegistrationMode.Single, dijs_abstractions_1.ServiceType.Transient, id, ct, ctr);
+dijs_1.ServiceCollection.prototype.RegisterTransientClass = function (id, ct, ctor) {
+    this.RegisterClass(dijs_abstractions_1.ServiceRegistrationMode.Single, dijs_abstractions_1.ServiceType.Transient, id, ct, ctor);
+};
+dijs_1.ServiceCollection.prototype.OverwriteTransientClass = function (id, ct, ctor) {
+    this.RegisterClass(dijs_abstractions_1.ServiceRegistrationMode.Overwrite, dijs_abstractions_1.ServiceType.Transient, id, ct, ctor);
+};
+dijs_1.ServiceCollection.prototype.AddTransientClass = function (id, ct, ctor) {
+    this.RegisterClass(dijs_abstractions_1.ServiceRegistrationMode.Multiple, dijs_abstractions_1.ServiceType.Transient, id, ct, ctor);
+};
+dijs_1.ServiceCollection.prototype.RegisterTransientNamedClass = function (id, ct, ctor) {
+    this.RegisterClass(dijs_abstractions_1.ServiceRegistrationMode.Single, dijs_abstractions_1.ServiceType.TransientNamed, id, ct, ctor);
+};
+dijs_1.ServiceCollection.prototype.RegisterTransientFactory = function (id, factory) {
+    this.RegisterFactory(dijs_abstractions_1.ServiceRegistrationMode.Single, dijs_abstractions_1.ServiceType.Transient, id, factory);
+};
+dijs_1.ServiceCollection.prototype.RegisterTransientNamedFactory = function (id, factory) {
+    this.RegisterFactory(dijs_abstractions_1.ServiceRegistrationMode.Single, dijs_abstractions_1.ServiceType.TransientNamed, id, factory);
 };
 //# sourceMappingURL=extensions.js.map
 
@@ -624,6 +639,424 @@ __webpack_require__(/*! ./StringExtensions */ "./node_modules/@amaic/dijs/dist/p
 
 /***/ }),
 
+/***/ "../amaic-sma/dist/classes/StateKey.js":
+/*!*********************************************!*\
+  !*** ../amaic-sma/dist/classes/StateKey.js ***!
+  \*********************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+const IStateKey_1 = __webpack_require__(/*! ../interfaces/IStateKey */ "../amaic-sma/dist/interfaces/IStateKey.js");
+class StateKey {
+  constructor(storageType, key, scope) {
+    this.IStateKey = IStateKey_1.IStateKeyIdentifier;
+    this._storageType = storageType;
+    this._key = key;
+    this._scope = scope == undefined ? null : scope;
+  }
+  get StorageType() {
+    return this._storageType;
+  }
+  get Key() {
+    return this._key;
+  }
+  get Scope() {
+    return this._scope;
+  }
+  get FullQualifiedName() {
+    return this._scope == null ? this._key : `${this._scope}-${this._key}`;
+  }
+}
+exports["default"] = StateKey;
+
+/***/ }),
+
+/***/ "../amaic-sma/dist/classes/StateManager.js":
+/*!*************************************************!*\
+  !*** ../amaic-sma/dist/classes/StateManager.js ***!
+  \*************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+  function adopt(value) {
+    return value instanceof P ? value : new P(function (resolve) {
+      resolve(value);
+    });
+  }
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+    function step(result) {
+      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+    }
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+const StorageTypeNotRegistered_1 = __importDefault(__webpack_require__(/*! ../errors/StorageTypeNotRegistered */ "../amaic-sma/dist/errors/StorageTypeNotRegistered.js"));
+const IStateManager_1 = __webpack_require__(/*! ../interfaces/IStateManager */ "../amaic-sma/dist/interfaces/IStateManager.js");
+class StateManager {
+  constructor(storages) {
+    this.IStateManager = IStateManager_1.IStateManagerIdentifier;
+    this._storages = {};
+    for (const storage of storages) {
+      this._storages[storage.StorageType] = storage;
+    }
+  }
+  _getStorage(storageType) {
+    const storage = this._storages[storageType];
+    if (storage == undefined) throw new StorageTypeNotRegistered_1.default();
+    return storage;
+  }
+  SetState(stateKey, value) {
+    var _a, _b;
+    return __awaiter(this, void 0, void 0, function* () {
+      const storage = this._getStorage(stateKey.StorageType);
+      storage.SetState((_b = (_a = stateKey.Scope) === null || _a === void 0 ? void 0 : _a.Scope) !== null && _b !== void 0 ? _b : null, stateKey.Key, value);
+    });
+  }
+  GetState(stateKey) {
+    var _a, _b;
+    return __awaiter(this, void 0, void 0, function* () {
+      const storage = this._getStorage(stateKey.StorageType);
+      return yield storage.GetState((_b = (_a = stateKey.Scope) === null || _a === void 0 ? void 0 : _a.Scope) !== null && _b !== void 0 ? _b : null, stateKey.Key);
+    });
+  }
+  GetRegisteredStorageTypes() {
+    return Object.getOwnPropertySymbols(this._storages);
+  }
+}
+exports["default"] = StateManager;
+
+/***/ }),
+
+/***/ "../amaic-sma/dist/errors/StorageTypeNotRegistered.js":
+/*!************************************************************!*\
+  !*** ../amaic-sma/dist/errors/StorageTypeNotRegistered.js ***!
+  \************************************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+class StorageTypeNotRegistered extends Error {
+  constructor(message = "Storage type not registered.") {
+    super(message);
+  }
+}
+exports["default"] = StorageTypeNotRegistered;
+
+/***/ }),
+
+/***/ "../amaic-sma/dist/index.js":
+/*!**********************************!*\
+  !*** ../amaic-sma/dist/index.js ***!
+  \**********************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+
+var __createBinding = this && this.__createBinding || (Object.create ? function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  var desc = Object.getOwnPropertyDescriptor(m, k);
+  if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+    desc = {
+      enumerable: true,
+      get: function () {
+        return m[k];
+      }
+    };
+  }
+  Object.defineProperty(o, k2, desc);
+} : function (o, m, k, k2) {
+  if (k2 === undefined) k2 = k;
+  o[k2] = m[k];
+});
+var __setModuleDefault = this && this.__setModuleDefault || (Object.create ? function (o, v) {
+  Object.defineProperty(o, "default", {
+    enumerable: true,
+    value: v
+  });
+} : function (o, v) {
+  o["default"] = v;
+});
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+  __setModuleDefault(result, mod);
+  return result;
+};
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.StateManagerLocationStorageType = exports.StateManagerLocationStorage = exports.StateManagerLocalStorageType = exports.StateManagerLocalStorage = exports.IStateManagerStorageIdentifier = exports.IStateKeyIdentifier = exports.StateKey = exports.IStateManagerIdentifier = exports.StateManager = void 0;
+const StateManager_1 = __importDefault(__webpack_require__(/*! ./classes/StateManager */ "../amaic-sma/dist/classes/StateManager.js"));
+exports.StateManager = StateManager_1.default;
+const StateManagerLocalStorage_1 = __importStar(__webpack_require__(/*! ./storages/StateManagerLocalStorage */ "../amaic-sma/dist/storages/StateManagerLocalStorage.js"));
+exports.StateManagerLocalStorage = StateManagerLocalStorage_1.default;
+Object.defineProperty(exports, "StateManagerLocalStorageType", ({
+  enumerable: true,
+  get: function () {
+    return StateManagerLocalStorage_1.StateManagerLocalStorageType;
+  }
+}));
+const IStateManager_1 = __webpack_require__(/*! ./interfaces/IStateManager */ "../amaic-sma/dist/interfaces/IStateManager.js");
+Object.defineProperty(exports, "IStateManagerIdentifier", ({
+  enumerable: true,
+  get: function () {
+    return IStateManager_1.IStateManagerIdentifier;
+  }
+}));
+const IStateManagerStorage_1 = __webpack_require__(/*! ./interfaces/IStateManagerStorage */ "../amaic-sma/dist/interfaces/IStateManagerStorage.js");
+Object.defineProperty(exports, "IStateManagerStorageIdentifier", ({
+  enumerable: true,
+  get: function () {
+    return IStateManagerStorage_1.IStateManagerStorageIdentifier;
+  }
+}));
+const StateKey_1 = __importDefault(__webpack_require__(/*! ./classes/StateKey */ "../amaic-sma/dist/classes/StateKey.js"));
+exports.StateKey = StateKey_1.default;
+const IStateKey_1 = __webpack_require__(/*! ./interfaces/IStateKey */ "../amaic-sma/dist/interfaces/IStateKey.js");
+Object.defineProperty(exports, "IStateKeyIdentifier", ({
+  enumerable: true,
+  get: function () {
+    return IStateKey_1.IStateKeyIdentifier;
+  }
+}));
+const StateManagerLocationStorage_1 = __importStar(__webpack_require__(/*! ./storages/StateManagerLocationStorage */ "../amaic-sma/dist/storages/StateManagerLocationStorage.js"));
+exports.StateManagerLocationStorage = StateManagerLocationStorage_1.default;
+Object.defineProperty(exports, "StateManagerLocationStorageType", ({
+  enumerable: true,
+  get: function () {
+    return StateManagerLocationStorage_1.StateManagerLocationStorageType;
+  }
+}));
+
+/***/ }),
+
+/***/ "../amaic-sma/dist/interfaces/IStateKey.js":
+/*!*************************************************!*\
+  !*** ../amaic-sma/dist/interfaces/IStateKey.js ***!
+  \*************************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.IsIStateKey = exports.IStateKeyIdentifier = void 0;
+/** Unique identifier of IStateKey. */
+exports.IStateKeyIdentifier = Symbol("IStateKey");
+/**
+ * Test if a object implements IStateKey.
+ * @param instance test object
+ * @returns if implements IStateKey then true else false
+ */
+function IsIStateKey(instance) {
+  return (instance === null || instance === void 0 ? void 0 : instance.IStateKey) === exports.IStateKeyIdentifier;
+}
+exports.IsIStateKey = IsIStateKey;
+
+/***/ }),
+
+/***/ "../amaic-sma/dist/interfaces/IStateManager.js":
+/*!*****************************************************!*\
+  !*** ../amaic-sma/dist/interfaces/IStateManager.js ***!
+  \*****************************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.IsIStateManager = exports.IStateManagerIdentifier = void 0;
+/** Unique identifier of IStateManager */
+exports.IStateManagerIdentifier = Symbol("IStateManager");
+/**
+ * Test if a object implements IStateManager.
+ * @param instance test object
+ * @returns if implements IStateManager then true else false
+ */
+function IsIStateManager(instance) {
+  return (instance === null || instance === void 0 ? void 0 : instance.IStateManager) === exports.IStateManagerIdentifier;
+}
+exports.IsIStateManager = IsIStateManager;
+
+/***/ }),
+
+/***/ "../amaic-sma/dist/interfaces/IStateManagerStorage.js":
+/*!************************************************************!*\
+  !*** ../amaic-sma/dist/interfaces/IStateManagerStorage.js ***!
+  \************************************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.IsIStateManagerStorage = exports.IStateManagerStorageIdentifier = void 0;
+exports.IStateManagerStorageIdentifier = Symbol("IStateManagerStorage");
+function IsIStateManagerStorage(instance) {
+  return (instance === null || instance === void 0 ? void 0 : instance.IStateManagerStorage) === exports.IStateManagerStorageIdentifier;
+}
+exports.IsIStateManagerStorage = IsIStateManagerStorage;
+
+/***/ }),
+
+/***/ "../amaic-sma/dist/storages/StateManagerLocalStorage.js":
+/*!**************************************************************!*\
+  !*** ../amaic-sma/dist/storages/StateManagerLocalStorage.js ***!
+  \**************************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+  function adopt(value) {
+    return value instanceof P ? value : new P(function (resolve) {
+      resolve(value);
+    });
+  }
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+    function step(result) {
+      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+    }
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.StateManagerLocalStorageType = void 0;
+const IStateManagerStorage_1 = __webpack_require__(/*! ../interfaces/IStateManagerStorage */ "../amaic-sma/dist/interfaces/IStateManagerStorage.js");
+class StateManagerLocalStorage {
+  constructor() {
+    this.IStateManagerStorage = IStateManagerStorage_1.IStateManagerStorageIdentifier;
+  }
+  get StorageType() {
+    return exports.StateManagerLocalStorageType;
+  }
+  _getFullQualifiedKey(scope, key) {
+    return scope == null ? key : `${scope}.${key}`;
+  }
+  SetState(scope, key, value) {
+    return __awaiter(this, void 0, void 0, function* () {
+      const fullQualifiedKey = this._getFullQualifiedKey(scope, key);
+      if (value == null) {
+        window.localStorage.removeItem(fullQualifiedKey);
+      } else {
+        window.localStorage.setItem(fullQualifiedKey, value);
+      }
+    });
+  }
+  GetState(scope, key) {
+    return __awaiter(this, void 0, void 0, function* () {
+      const fullQualifiedKey = this._getFullQualifiedKey(scope, key);
+      return window.localStorage.getItem(fullQualifiedKey);
+    });
+  }
+}
+exports["default"] = StateManagerLocalStorage;
+exports.StateManagerLocalStorageType = Symbol("StateManagerLocalStorage");
+
+/***/ }),
+
+/***/ "../amaic-sma/dist/storages/StateManagerLocationStorage.js":
+/*!*****************************************************************!*\
+  !*** ../amaic-sma/dist/storages/StateManagerLocationStorage.js ***!
+  \*****************************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.StateManagerLocationStorageType = void 0;
+const IStateManagerStorage_1 = __webpack_require__(/*! ../interfaces/IStateManagerStorage */ "../amaic-sma/dist/interfaces/IStateManagerStorage.js");
+class StateManagerLocationStorage {
+  constructor() {
+    this.IStateManagerStorage = IStateManagerStorage_1.IStateManagerStorageIdentifier;
+  }
+  get StorageType() {
+    return exports.StateManagerLocationStorageType;
+  }
+  _getFullQualifiedKey(scope, key) {
+    return scope == null ? key : `${scope}-${key}`;
+  }
+  SetState(scope, key, value) {
+    const fullQualifiedKey = this._getFullQualifiedKey(scope, key);
+    const searchParams = new URLSearchParams(window.location.search);
+    if (value == null) {
+      searchParams.delete(fullQualifiedKey);
+    } else {
+      searchParams.set(fullQualifiedKey, value);
+    }
+    window.location.search = searchParams.toString();
+    return Promise.resolve();
+  }
+  GetState(scope, key) {
+    const fullQualifiedKey = this._getFullQualifiedKey(scope, key);
+    const searchParams = new URLSearchParams(window.location.search);
+    const value = searchParams.get(fullQualifiedKey);
+    return Promise.resolve(value);
+  }
+}
+exports["default"] = StateManagerLocationStorage;
+exports.StateManagerLocationStorageType = Symbol("StateManagerLocationStorage");
+
+/***/ }),
+
 /***/ "./src/bootloader.ts":
 /*!***************************!*\
   !*** ./src/bootloader.ts ***!
@@ -643,8 +1076,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const dijs_1 = __webpack_require__(/*! @amaic/dijs */ "./node_modules/@amaic/dijs/dist/index.js");
 const dijs_abstractions_1 = __webpack_require__(/*! @amaic/dijs-abstractions */ "./node_modules/@amaic/dijs-abstractions/dist/index.js");
-__webpack_require__(/*! @amaic/dijs-extensions-registration */ "./node_modules/@amaic/dijs-extensions-registration/dist/index.js");
 const IAppSettings_1 = __webpack_require__(/*! ./interfaces/IAppSettings */ "./src/interfaces/IAppSettings.ts");
+__webpack_require__(/*! @amaic/dijs-extensions-registration */ "./node_modules/@amaic/dijs-extensions-registration/dist/index.js");
+const amaic_sma_1 = __webpack_require__(/*! amaic-sma */ "../amaic-sma/dist/index.js");
 let fetchAppSettingsTask;
 function Bootloader(appSettingsUrl) {
     fetchAppSettingsTask = fetch(appSettingsUrl);
@@ -670,9 +1104,13 @@ function Startup() {
         const appSettings = yield appSettingsrResponse.json();
         const serviceCollection = new dijs_1.ServiceCollection();
         serviceCollection.RegisterInstance(dijs_abstractions_1.ServiceRegistrationMode.Single, IAppSettings_1.IAppSettingsIdentifier, appSettings);
-        const serviceProvider = serviceCollection.CreateServiceProvider();
-        const test = serviceProvider.GetRequiredService(IAppSettings_1.IAppSettingsIdentifier);
-        console.debug(test.ApiEndpoint);
+        registerServices(serviceCollection, appSettings);
+    });
+}
+function registerServices(serviceCollection, appSettings) {
+    return __awaiter(this, void 0, void 0, function* () {
+        serviceCollection.RegisterTransientClass(amaic_sma_1.IStateManagerIdentifier, amaic_sma_1.StateManager, (classType, serviceProvider) => new classType(serviceProvider.GetRequiredServices(amaic_sma_1.IStateManagerStorageIdentifier)));
+        serviceCollection.RegisterTransientClass(amaic_sma_1.IStateManagerStorageIdentifier, amaic_sma_1.StateManagerLocalStorage);
     });
 }
 
@@ -692,6 +1130,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const bootloader_1 = __importDefault(__webpack_require__(/*! ./bootloader */ "./src/bootloader.ts"));
 (0, bootloader_1.default)("./appSettings.json");
+console.debug(window.location);
+const searchParams = new URLSearchParams(window.location.search);
+for (let key of searchParams.keys()) {
+    console.debug(key);
+}
 
 
 /***/ }),
