@@ -1,21 +1,27 @@
 import { ServiceCollection } from "@amaic/dijs";
-import { IServiceCollection, ServiceRegistrationMode } from "@amaic/dijs-abstractions";
+import { IServiceCollection, IServiceProvider, ServiceRegistrationMode } from "@amaic/dijs-abstractions";
 import "@amaic/dijs-extensions-registration";
 
 type RegisterServicesCallback = (serviceCollection: IServiceCollection, appSettings: any) => Promise<void>;
 export const IAppSettingsIdentifier = Symbol("IAppSettings");
 const RegisterServicesCallbackDefault: RegisterServicesCallback = () => Promise.resolve();
 
+type IntializationCallback = (serviceProvider: IServiceProvider) => Promise<void>;
+const InitializationCallbackDefault: IntializationCallback = () => Promise.resolve();
+
 let FetchAppSettingsTask: Promise<Response> | undefined;
 let RegisterServices: RegisterServicesCallback | undefined;
+let Initialization: IntializationCallback | undefined;
 
 export default function Bootloader({
     appSettingsUrl = "",
-    registerServices = RegisterServicesCallbackDefault
+    registerServices = RegisterServicesCallbackDefault,
+    initialization = InitializationCallbackDefault
 }): void
 {
     FetchAppSettingsTask = fetch(appSettingsUrl);
     RegisterServices = registerServices;
+    Initialization = initialization;
 
     if (document.readyState === "loading")
     {
@@ -31,13 +37,19 @@ async function startup(): Promise<void>
 {
     if (FetchAppSettingsTask == undefined)
     {
-        console.error("fetchAppSettingsTask is undefined.");
+        console.error("FetchAppSettingsTask is undefined.");
         return;
     }
 
     if (RegisterServices == undefined)
     {
-        console.error("registerServicesCallback is undefined.");
+        console.error("RegisterServices is undefined.");
+        return;
+    }
+
+    if (Initialization == undefined)
+    {
+        console.error("Initialization is undefined.");
         return;
     }
 
@@ -60,4 +72,8 @@ async function startup(): Promise<void>
     );
 
     RegisterServices(serviceCollection, appSettings);
+
+    const serviceProvider = serviceCollection.CreateServiceProvider();
+
+    Initialization(serviceProvider);
 }
