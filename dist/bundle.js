@@ -1057,9 +1057,9 @@ exports.StateManagerLocationStorageType = Symbol("StateManagerLocationStorage");
 
 /***/ }),
 
-/***/ "./src/bootloader.ts":
+/***/ "./src/Bootloader.ts":
 /*!***************************!*\
-  !*** ./src/bootloader.ts ***!
+  !*** ./src/Bootloader.ts ***!
   \***************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
@@ -1074,45 +1074,75 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.IAppSettingsIdentifier = void 0;
 const dijs_1 = __webpack_require__(/*! @amaic/dijs */ "./node_modules/@amaic/dijs/dist/index.js");
 const dijs_abstractions_1 = __webpack_require__(/*! @amaic/dijs-abstractions */ "./node_modules/@amaic/dijs-abstractions/dist/index.js");
-const IAppSettings_1 = __webpack_require__(/*! ./interfaces/IAppSettings */ "./src/interfaces/IAppSettings.ts");
 __webpack_require__(/*! @amaic/dijs-extensions-registration */ "./node_modules/@amaic/dijs-extensions-registration/dist/index.js");
-const amaic_sma_1 = __webpack_require__(/*! amaic-sma */ "../amaic-sma/dist/index.js");
-let fetchAppSettingsTask;
-function Bootloader(appSettingsUrl) {
-    fetchAppSettingsTask = fetch(appSettingsUrl);
+exports.IAppSettingsIdentifier = Symbol("IAppSettings");
+const RegisterServicesCallbackDefault = () => Promise.resolve();
+let FetchAppSettingsTask;
+let RegisterServices;
+function Bootloader({ appSettingsUrl = "", registerServices = RegisterServicesCallbackDefault }) {
+    FetchAppSettingsTask = fetch(appSettingsUrl);
+    RegisterServices = registerServices;
     if (document.readyState === "loading") {
-        window.addEventListener('DOMContentLoaded', Startup);
+        window.addEventListener('DOMContentLoaded', startup);
     }
     else {
-        Startup();
+        startup();
     }
 }
 exports["default"] = Bootloader;
-function Startup() {
+function startup() {
     return __awaiter(this, void 0, void 0, function* () {
-        if (fetchAppSettingsTask == undefined) {
+        if (FetchAppSettingsTask == undefined) {
             console.error("fetchAppSettingsTask is undefined.");
             return;
         }
-        const appSettingsrResponse = yield fetchAppSettingsTask;
+        if (RegisterServices == undefined) {
+            console.error("registerServicesCallback is undefined.");
+            return;
+        }
+        const appSettingsrResponse = yield FetchAppSettingsTask;
         if (appSettingsrResponse.ok == false) {
             console.error("Unable to load %s: %d %s", appSettingsrResponse.url, appSettingsrResponse.status, appSettingsrResponse.statusText);
             return;
         }
         const appSettings = yield appSettingsrResponse.json();
         const serviceCollection = new dijs_1.ServiceCollection();
-        serviceCollection.RegisterInstance(dijs_abstractions_1.ServiceRegistrationMode.Single, IAppSettings_1.IAppSettingsIdentifier, appSettings);
-        registerServices(serviceCollection, appSettings);
+        serviceCollection.RegisterInstance(dijs_abstractions_1.ServiceRegistrationMode.Single, exports.IAppSettingsIdentifier, appSettings);
+        RegisterServices(serviceCollection, appSettings);
     });
 }
-function registerServices(serviceCollection, appSettings) {
+
+
+/***/ }),
+
+/***/ "./src/ServiceRegistration.ts":
+/*!************************************!*\
+  !*** ./src/ServiceRegistration.ts ***!
+  \************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const amaic_sma_1 = __webpack_require__(/*! amaic-sma */ "../amaic-sma/dist/index.js");
+function RegisterServices(serviceCollection, appSettings) {
     return __awaiter(this, void 0, void 0, function* () {
         serviceCollection.RegisterTransientClass(amaic_sma_1.IStateManagerIdentifier, amaic_sma_1.StateManager, (classType, serviceProvider) => new classType(serviceProvider.GetRequiredServices(amaic_sma_1.IStateManagerStorageIdentifier)));
         serviceCollection.RegisterTransientClass(amaic_sma_1.IStateManagerStorageIdentifier, amaic_sma_1.StateManagerLocalStorage);
     });
 }
+exports["default"] = RegisterServices;
 
 
 /***/ }),
@@ -1128,27 +1158,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const bootloader_1 = __importDefault(__webpack_require__(/*! ./bootloader */ "./src/bootloader.ts"));
-(0, bootloader_1.default)("./appSettings.json");
-console.debug(window.location);
-const searchParams = new URLSearchParams(window.location.search);
-for (let key of searchParams.keys()) {
-    console.debug(key);
-}
-
-
-/***/ }),
-
-/***/ "./src/interfaces/IAppSettings.ts":
-/*!****************************************!*\
-  !*** ./src/interfaces/IAppSettings.ts ***!
-  \****************************************/
-/***/ ((__unused_webpack_module, exports) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.IAppSettingsIdentifier = void 0;
-exports.IAppSettingsIdentifier = Symbol("IAppSettings");
+const Bootloader_1 = __importDefault(__webpack_require__(/*! ./Bootloader */ "./src/Bootloader.ts"));
+const ServiceRegistration_1 = __importDefault(__webpack_require__(/*! ./ServiceRegistration */ "./src/ServiceRegistration.ts"));
+(0, Bootloader_1.default)({
+    appSettingsUrl: "./appSettings.json",
+    registerServices: ServiceRegistration_1.default
+});
 
 
 /***/ })

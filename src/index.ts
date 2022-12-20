@@ -1,12 +1,7 @@
-import Bootloader from "./bootloader";
+import Bootloader from "./Bootloader";
+import RegisterServices from "./ServiceRegistration";
 
-Bootloader("./appSettings.json");
-
-console.debug(window.location);
-
-const searchParams = new URLSearchParams(window.location.search);
-
-for(let key of searchParams.keys())
-{
-    console.debug(key);
-}
+Bootloader({
+    appSettingsUrl: "./appSettings.json",
+    registerServices: RegisterServices 
+});

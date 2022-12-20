@@ -1,34 +1,47 @@
 import { ServiceCollection } from "@amaic/dijs";
 import { IServiceCollection, ServiceRegistrationMode } from "@amaic/dijs-abstractions";
-import IAppSettings, { IAppSettingsIdentifier } from "./interfaces/IAppSettings";
 import "@amaic/dijs-extensions-registration";
-import { IStateManager, IStateManagerIdentifier, IStateManagerStorage, IStateManagerStorageIdentifier, StateManager, StateManagerLocalStorage }from "amaic-sma";
 
-let fetchAppSettingsTask: Promise<Response> | undefined;
+type RegisterServicesCallback = (serviceCollection: IServiceCollection, appSettings: any) => Promise<void>;
+export const IAppSettingsIdentifier = Symbol("IAppSettings");
+const RegisterServicesCallbackDefault: RegisterServicesCallback = () => Promise.resolve();
 
-export default function Bootloader(appSettingsUrl: string): void
+let FetchAppSettingsTask: Promise<Response> | undefined;
+let RegisterServices: RegisterServicesCallback | undefined;
+
+export default function Bootloader({
+    appSettingsUrl = "",
+    registerServices = RegisterServicesCallbackDefault
+}): void
 {
-    fetchAppSettingsTask = fetch(appSettingsUrl);
+    FetchAppSettingsTask = fetch(appSettingsUrl);
+    RegisterServices = registerServices;
 
     if (document.readyState === "loading")
     {
-        window.addEventListener('DOMContentLoaded', Startup);
+        window.addEventListener('DOMContentLoaded', startup);
     }
     else
     {
-        Startup();
+        startup();
     }
 }
 
-async function Startup(): Promise<void>
+async function startup(): Promise<void>
 {
-    if (fetchAppSettingsTask == undefined)
+    if (FetchAppSettingsTask == undefined)
     {
         console.error("fetchAppSettingsTask is undefined.");
         return;
     }
 
-    const appSettingsrResponse = await fetchAppSettingsTask;
+    if (RegisterServices == undefined)
+    {
+        console.error("registerServicesCallback is undefined.");
+        return;
+    }
+
+    const appSettingsrResponse = await FetchAppSettingsTask;
 
     if (appSettingsrResponse.ok == false)
     {
@@ -36,7 +49,7 @@ async function Startup(): Promise<void>
         return;
     }
 
-    const appSettings: IAppSettings = await appSettingsrResponse.json();
+    const appSettings = await appSettingsrResponse.json();
 
     const serviceCollection = new ServiceCollection();
 
@@ -46,20 +59,5 @@ async function Startup(): Promise<void>
         appSettings
     );
 
-    registerServices(serviceCollection, appSettings);
-
-}
-
-async function registerServices(serviceCollection: IServiceCollection, appSettings: IAppSettings): Promise<void>
-{
-    serviceCollection.RegisterTransientClass<IStateManager, typeof StateManager>(
-        IStateManagerIdentifier,
-        StateManager,
-        (classType, serviceProvider)=> new classType(serviceProvider.GetRequiredServices<IStateManagerStorage>(IStateManagerStorageIdentifier))
-    );
-
-    serviceCollection.RegisterTransientClass<IStateManagerStorage, typeof StateManagerLocalStorage>(
-        IStateManagerStorageIdentifier,
-        StateManagerLocalStorage
-    );
+    RegisterServices(serviceCollection, appSettings);
 }
