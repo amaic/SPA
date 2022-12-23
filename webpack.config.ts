@@ -49,7 +49,13 @@ const config: Configuration =
                 { from: "./src/appSettings.json", to: 'appSettings.json' }
             ]
         })
-    ]
+    ],
+
+    optimization:{
+        splitChunks: {
+            chunks: "all"
+        }
+    }
 };
 
 export default config;
