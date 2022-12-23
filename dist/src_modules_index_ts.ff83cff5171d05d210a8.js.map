@@ -1,0 +1,1 @@
+{"version":3,"file":"src_modules_index_ts.ff83cff5171d05d210a8.js","mappings":";;;;;;;;;;;;;AAAe,SAAS,IAAI;IAExB,OAAO,2BAA2B,CAAC;AACvC,CAAC","sources":["webpack://spa/./src/modules/index.ts"],"sourcesContent":["export default function Test(): string\r\n{\r\n    return \"Alexander Mauri was here!\";\r\n}"],"names":[],"sourceRoot":""}

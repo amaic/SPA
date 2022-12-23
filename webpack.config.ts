@@ -13,26 +13,31 @@ const config: Configuration =
     output: {
         clean: true,
         path: path.resolve(__dirname, 'dist'),
-        filename: 'bundle.js',
+        filename: '[name].[hash].js',
     },
 
     module: {
         rules: [
             {
-                test: /\.tsx?$/,
+                test: /\.ts$/,
                 exclude: /node_modules/,
                 use: 'ts-loader',
             },
             {
-                test: /\.m?js$/,
+                test: /\.js$/,
                 exclude: /(node_modules|bower_components)/,
-                use: 'babel-loader',
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-env']
+                    }
+                }
             }
         ],
     },
 
     resolve: {
-        extensions: ['.tsx', '.ts', '.js'],
+        extensions: ['.ts', '.js'],
     },
 
     plugins: [
