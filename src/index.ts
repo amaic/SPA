@@ -1,6 +1,6 @@
 import Bootloader from "./Bootloader";
 import Initialization from "./Run";
-import RegisterServices from "./ServiceRegistration";
+import RegisterServices from "./Services";
 
 Bootloader({
     appSettingsUrl: "./appSettings.json",
