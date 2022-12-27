@@ -1,6 +1,7 @@
 import { IServiceProvider } from "@amaic/dijs-abstractions";
 import ko from "knockout";
 import ComponentLoader from "./ComponentLoader";
+import "./../node_modules/bootstrap/scss/bootstrap.scss";
 
 export default async function Initialization(serviceProvider: IServiceProvider): Promise<void>
 {
@@ -9,7 +10,7 @@ export default async function Initialization(serviceProvider: IServiceProvider):
 
     ko.components.loaders.push(new ComponentLoader());
 
-    ko.components.register("content", {});
+    ko.components.register("amaic-spa-content", {});
 
     ko.applyBindings({});
 
