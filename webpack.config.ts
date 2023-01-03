@@ -14,7 +14,8 @@ const config: Configuration =
     output: {
         clean: true,
         path: path.resolve(__dirname, 'dist'),
-        filename: '[contenthash].js',
+        filename: 'main.[contenthash].js',
+        chunkFilename: 'chunk.[contenthash].js',
     },
 
     module: {
@@ -43,7 +44,11 @@ const config: Configuration =
                     // Compiles Sass to CSS
                     "sass-loader",
                 ]
-            }
+            },
+            {
+                test: /\.html$/i,
+                loader: "html-loader",
+            },
         ],
     },
 
@@ -61,7 +66,8 @@ const config: Configuration =
             ]
         }),
         new MiniCssExtractPlugin({
-            
+            filename: 'main.[contenthash].css',
+            chunkFilename: 'chunk.[contenthash].css',
         })
     ],
 

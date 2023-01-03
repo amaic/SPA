@@ -1,39 +1,40 @@
 import { ServiceCollection } from "@amaic/dijs";
 import { IServiceCollection, IServiceProvider, ServiceRegistrationMode } from "@amaic/dijs-abstractions";
 import "@amaic/dijs-extensions-registration";
+import IAppSettings, { IAppSettingsIdentifier } from "../interfaces/IAppSettings";
+import { DefaultAppSettings } from "../options/DefaultAppSettings";
 
 type RegisterServicesCallback = (serviceCollection: IServiceCollection, appSettings: any) => Promise<void>;
-export const IAppSettingsIdentifier = Symbol("IAppSettings");
 const RegisterServicesCallbackDefault: RegisterServicesCallback = () => Promise.resolve();
 
-type IntializationCallback = (serviceProvider: IServiceProvider) => Promise<void>;
-const InitializationCallbackDefault: IntializationCallback = () => Promise.resolve();
+type StartupCallback = (serviceProvider: IServiceProvider) => Promise<void>;
+const StartupCallbackDefault: StartupCallback = () => Promise.resolve();
 
 let FetchAppSettingsTask: Promise<Response> | undefined;
 let RegisterServices: RegisterServicesCallback | undefined;
-let Initialization: IntializationCallback | undefined;
+let Startup: StartupCallback | undefined;
 
 export default function Bootloader({
     appSettingsUrl = "",
     registerServices = RegisterServicesCallbackDefault,
-    initialization = InitializationCallbackDefault
+    startup = StartupCallbackDefault
 }): void
 {
     FetchAppSettingsTask = fetch(appSettingsUrl);
     RegisterServices = registerServices;
-    Initialization = initialization;
+    Startup = startup;
 
     if (document.readyState === "loading")
     {
-        window.addEventListener('DOMContentLoaded', startup);
+        window.addEventListener('DOMContentLoaded', onContentLoaded);
     }
     else
     {
-        startup();
+        onContentLoaded();
     }
 }
 
-async function startup(): Promise<void>
+async function onContentLoaded(): Promise<void>
 {
     if (FetchAppSettingsTask == undefined)
     {
@@ -47,21 +48,25 @@ async function startup(): Promise<void>
         return;
     }
 
-    if (Initialization == undefined)
+    if (Startup == undefined)
     {
-        console.error("Initialization is undefined.");
+        console.error("Startup is undefined.");
         return;
     }
 
-    const appSettingsrResponse = await FetchAppSettingsTask;
+    const appSettingsResponse = await FetchAppSettingsTask;
 
-    if (appSettingsrResponse.ok == false)
+    if (appSettingsResponse.ok == false)
     {
-        console.error("Unable to load %s: %d %s", appSettingsrResponse.url, appSettingsrResponse.status, appSettingsrResponse.statusText);
+        console.error("Unable to load %s: %d %s", appSettingsResponse.url, appSettingsResponse.status, appSettingsResponse.statusText);
         return;
     }
 
-    const appSettings = await appSettingsrResponse.json();
+    const appSettings: IAppSettings = 
+    {
+        ...DefaultAppSettings,
+        ...await appSettingsResponse.json()
+    };
 
     const serviceCollection = new ServiceCollection();
 
@@ -75,5 +80,5 @@ async function startup(): Promise<void>
 
     const serviceProvider = serviceCollection.CreateServiceProvider();
 
-    Initialization(serviceProvider);
+    Startup(serviceProvider);
 }

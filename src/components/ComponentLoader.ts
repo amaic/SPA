@@ -8,8 +8,7 @@ export default class ComponentLoader implements ko.components.DefaultLoader
 
     public getConfig(componentName: string, callback: (config: object | ko.components.Config) => void): void
     {
-        callback({ template: "<div>Alexander</div>" });
-        // ko.components.defaultLoader.getConfig(componentName, callback);
+        ko.components.defaultLoader.getConfig(componentName, callback);
     }
 
     public loadComponent(componentName: string, config: object | ko.components.Config, callback: (component: ko.components.Component) => void): void

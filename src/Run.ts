@@ -1,18 +1,18 @@
 import { IServiceProvider } from "@amaic/dijs-abstractions";
-import ko from "knockout";
-import ComponentLoader from "./ComponentLoader";
 import "./../node_modules/bootstrap/scss/bootstrap.scss";
+import "bootstrap";
+import "./main.scss";
+import { INavigatorIdentifier } from "./interfaces/INavigator";
+import IInitialize from "./interfaces/IInitialize";
+import { HomePage } from "./pages";
 
-export default async function Initialization(serviceProvider: IServiceProvider): Promise<void>
+export default async function Startup(serviceProvider: IServiceProvider): Promise<void>
 {
+    const navigator = serviceProvider.GetRequiredService(INavigatorIdentifier);
 
-    ko.components.loaders.length = 0;
+    await (navigator as IInitialize).Initialize();
 
-    ko.components.loaders.push(new ComponentLoader());
+    new HomePage();
 
-    ko.components.register("amaic-spa-content", {});
-
-    ko.applyBindings({});
-
-    return Promise.resolve();
+    console.debug("SPA is running.");
 }
